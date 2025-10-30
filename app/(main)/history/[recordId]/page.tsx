@@ -84,14 +84,14 @@ export default function RecordDetailPage({
                         ))}
                     </div>
                 </div>
-                {detail.aiFeedback && (
+                {/* {detail.aiFeedback && (
                     <div>
                         <h3 className="text-xl font-bold mb-4">AI 回饋重點</h3>
                         <AiMessage
                             message={{ evaluation: detail.aiFeedback }}
                         />
                     </div>
-                )}
+                )} */}
             </div>
         </div>
     );
