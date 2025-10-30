@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Question } from "./types/questions";
+import { Editor } from "@monaco-editor/react";
 export default function Home() {
     const [answer, setAnswer] = useState("");
     const [feedback, setFeedback] = useState("");
@@ -10,7 +11,7 @@ export default function Home() {
     ); // 加入currentQuestion state
     const [isFetchingQuestion, setIsFetchingQuestion] = useState(false); // 加入isFetchingQuestion state
     const handleSubmit = async () => {
-        if (!answer) return;
+        if (!answer || !currentQuestion) return;
         try {
             setIsLoading(true);
             // 發送請求到我們剛剛在後端app/api/gemini/route.ts建立的API
@@ -29,6 +30,37 @@ export default function Home() {
             setIsLoading(false);
         }
     };
+
+    const renderAnswerArea = () => {
+        if (!currentQuestion) return null;
+
+        if (currentQuestion.type === "code") {
+            return (
+                <Editor
+                    height="40vh"
+                    language="javascript"
+                    theme="vs-dark"
+                    value={answer}
+                    onChange={(value) => setAnswer(value || "")}
+                    options={{
+                        minimap: { enabled: false },
+                        fontSize: 16,
+                    }}
+                />
+            );
+        } else {
+            return (
+                <textarea
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    className="w-full h-32 bg-gray-700 rounded p-3 text-white"
+                    placeholder="在這裡輸入你的答案..."
+                    disabled={isLoading}
+                />
+            );
+        }
+    };
+
     useEffect(() => {
         const fetchQuestion = async () => {
             try {
@@ -36,6 +68,11 @@ export default function Home() {
                 const response = await fetch("/api/questions");
                 const data = await response.json();
                 setCurrentQuestion(data);
+                if (data.type === "code" && data.starterCode) {
+                    setAnswer(data.starterCode);
+                } else {
+                    setAnswer("");
+                }
             } catch (error) {
                 console.error("無法抓取題目:", error);
             } finally {
@@ -73,15 +110,7 @@ export default function Home() {
                     </div>
 
                     {/* 作答區 */}
-                    <div className="bg-gray-800 rounded-lg p-6 mb-6">
-                        <textarea
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                            className="w-full h-32 bg-gray-700 rounded p-3 text-white"
-                            placeholder="在這裡輸入你的答案..."
-                            disabled={isLoading}
-                        />
-                    </div>
+                    {renderAnswerArea()}
 
                     {/* 按鈕 */}
                     <button
