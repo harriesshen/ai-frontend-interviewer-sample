@@ -1,26 +1,27 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Question } from "./types/questions";
 export default function Home() {
     const [answer, setAnswer] = useState("");
     const [feedback, setFeedback] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const question = "請解釋 JavaScript 中的 hoisting 是什麼？";
-
+    const [currentQuestion, setCurrentQuestion] = useState<Question | null>(
+        null
+    ); // 加入currentQuestion state
+    const [isFetchingQuestion, setIsFetchingQuestion] = useState(false); // 加入isFetchingQuestion state
     const handleSubmit = async () => {
         if (!answer) return;
         try {
             setIsLoading(true);
-
             // 發送請求到我們剛剛在後端app/api/gemini/route.ts建立的API
             const response = await fetch("/api/gemini", {
                 method: "POST",
                 body: JSON.stringify({
-                    question,
+                    question: currentQuestion?.question, // 在這邊用我們新的currentQuestion變數
                     answer,
                 }),
             });
             const data = await response.json();
-
             setFeedback(data.result);
         } catch (error) {
             console.error("錯誤:", error);
@@ -28,6 +29,21 @@ export default function Home() {
             setIsLoading(false);
         }
     };
+    useEffect(() => {
+        const fetchQuestion = async () => {
+            try {
+                setIsFetchingQuestion(true);
+                const response = await fetch("/api/questions");
+                const data = await response.json();
+                setCurrentQuestion(data);
+            } catch (error) {
+                console.error("無法抓取題目:", error);
+            } finally {
+                setIsFetchingQuestion(false);
+            }
+        };
+        fetchQuestion();
+    }, []);
     return (
         <main className="min-h-screen bg-gray-900 text-white">
             <div className="container mx-auto px-4 py-16">
@@ -38,10 +54,22 @@ export default function Home() {
                 <div className="max-w-2xl mx-auto">
                     {/* 題目區 */}
                     <div className="bg-gray-800 rounded-lg p-6 mb-6">
-                        <div className="text-sm text-blue-400 mb-2">
-                            題目 #1
-                        </div>
-                        <p className="text-lg">{question}</p>
+                        {isFetchingQuestion ? (
+                            <p className="text-center text-gray-400">
+                                正在從題庫抽取題目...
+                            </p>
+                        ) : (
+                            currentQuestion && (
+                                <>
+                                    <div className="text-sm text-blue-400 mb-2">
+                                        {currentQuestion.topic} 題目
+                                    </div>
+                                    <p className="text-lg">
+                                        {currentQuestion.question}
+                                    </p>
+                                </>
+                            )
+                        )}
                     </div>
 
                     {/* 作答區 */}
