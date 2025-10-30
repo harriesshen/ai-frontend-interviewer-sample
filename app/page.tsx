@@ -20,6 +20,7 @@ export default function Home() {
                 body: JSON.stringify({
                     question: currentQuestion?.question, // 在這邊用我們新的currentQuestion變數
                     answer,
+                    keyPoints: currentQuestion?.keyPoints, // 確認加入這行
                 }),
             });
             const data = await response.json();
